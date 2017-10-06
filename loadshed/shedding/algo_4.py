@@ -143,6 +143,7 @@ def load_set():
             print (e)
             pass
 
+
     print ('*'*60)
     print ('TOTAL LOADS')
     print ('MAX : HOUSE {}, SHEDS {}'.format(full_df['shedding'].argmax(),full_df['shedding'].max()))
