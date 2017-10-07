@@ -5,18 +5,16 @@ from matplotlib import pyplot as plt
 from pprint import pprint
 import numpy as np
 
-FILE_PATH   = os.path.join(os.getcwd(),'data','lstrial_tiny.h5')
-LOAD_SEG    = 2
+FILE_PATH = os.path.join(os.getcwd(), 'data', 'ls_complete.h5')
+LOAD_SEG = 100
+# FILE_PATH   = os.path.join(os.getcwd(),'data','lstrial_tiny.h5')
+# LOAD_SEG    = 2
 PAUSE_PRINT = False
 
 exclude_a = []
 exclude_b = []
 
-def form_groups(date_hour_group,avg_h_cons,cut,shedding,std):
-
-    exclude_b.clear()
-    for x in  [[row['house_id'],row['value']] for index,row in date_hour_group.iterrows() if row['value'] > avg_h_cons+2*std ] :
-        exclude_b.append(x[0])
+def form_groups(date_hour_group,avg_h_cons,cut,shedding):
     #Iterate the rows
     if len(exclude_a) == len(date_hour_group.index) :
         exclude_a.clear()
@@ -39,8 +37,15 @@ def form_groups(date_hour_group,avg_h_cons,cut,shedding,std):
 
     return groups,shedding
 
+def calc_stds(group,hour):
+    exclude_b.clear()
+    for g in group.groupby(['house_id']).groups :
+        std  = np.std(group.loc[group['house_id'] == g]['value'])
+        mean =  group.loc[group['house_id'] == g]['value'].mean()
+        h    =  [x['value'] for i,x in group.loc[(group['house_id'] == g) & (group['hour'] == hour)].iterrows()] [0]
 
-
+        if h > (mean+2*std) :
+            exclude_b.append(g)
 
 def load_set():
     '''
@@ -75,8 +80,9 @@ def load_set():
         print ('{} - {} - {}'.format(loads,a,b))
         try :
             avg_h_cons = df.loc[df['date'] == a]['value'].mean()*house_count
-            std = np.std(df.loc[df['date'] == a]['value'])
 
+            #stds = [np.std(df.loc[df['date'] == a]['value'])]
+            calc_stds(df.loc[df['date'] == a],b)
 
             date_hour_group  = date_hour_groups.get_group((a,b))
             h_cons = date_hour_group['value'].sum()
@@ -85,7 +91,7 @@ def load_set():
 
             if h_cons >= avg_h_cons :
                 #Form groups
-                groups,shedding = form_groups(date_hour_group,avg_h_cons,cut,shedding,std)
+                groups,shedding = form_groups(date_hour_group,avg_h_cons,cut,shedding)
 
                 #Shed, by the cumulative number of sheds in the group
                 shed_sums = [[sum([h[2] for h in groups[i]]),i] for i in range(0,len(groups))]
@@ -103,7 +109,7 @@ def load_set():
                     print('ID : {:>10.0f}, CONS : {:>10.2f}, SHED : {:>10.2f}'.format(hs[0],hs[1],hs[2]))
                 number_shed +=len(groups[g_index])
 
-                print ('CUT : {:>10.2f}, CONSUMPTION {:>10.2f}, STD {:>10.2f}'.format(cut,h_cons,std))
+                print ('CUT : {:>10.2f}, CONSUMPTION {:>10.2f}'.format(cut,h_cons))
                 print ('Excluded SHED')
                 print (exclude_a)
                 print ('Excluded STD')
@@ -143,7 +149,6 @@ def load_set():
             print (e)
             pass
 
-
     print ('*'*60)
     print ('TOTAL LOADS')
     print ('MAX : HOUSE {}, SHEDS {}'.format(full_df['shedding'].argmax(),full_df['shedding'].max()))
@@ -156,14 +161,21 @@ def load_set():
     print (ym)
     print (y)
 
-    plt.bar(x,y,width=LOAD_SEG/2.0,color='r',align='center')
-    plt.title('Sheds')
+    ticks = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+
+    plt.bar(x,y,width=LOAD_SEG/2.0,color='g',align='center',label = 'Sheds')
+    plt.xlabel('Every 100 shedding events')
+    plt.ylabel('Number of households shed')
+    plt.xticks(ticks, rotation='horizontal')
+    plt.ylim([0, max(y)* 1.3])
     plt.show()
 
-    p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='g' )
-    plt.title('Max')
-    plt.show()
-
-    p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='b',bottom=yx)
-    plt.title('min')
+    p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
+    p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
+    plt.xlabel('Every 100 shedding events')
+    plt.ylabel('Number of households shed')
+    plt.xticks(ticks, rotation='horizontal')
+    plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
+               fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
+    plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
     plt.show()
