@@ -6,8 +6,8 @@ Created on Mon Jul 24 11:56:55 2017
 import matplotlib.pyplot as plt
 
 from data.data_access import read_consumptions
-from shedding.shedding import Shedding  # Use this when running algo1 or shedding
-# from shedding.shedding1 import Shedding     # Use this when running algo2 or shedding1
+# from shedding.algo_1 import Shedding  # Use this when running algo1 or shedding
+from shedding.algo_2 import Shedding     # Use this when running algo2 or shedding1
 import gb
 from shedding import algo_3
 from shedding import algo_4
@@ -103,10 +103,10 @@ def algo3():
 
 
 if __name__ == '__main__':
-    # go() # this can be used when running algo1 or algo2. Just change at the top!
+    go() # this can be used when running algo1 or algo2. Just change at the top!
     # algo2()
     # algo_3.load_set()
-    algo_4.load_set()
+    # algo_4.load_set()
     # algo3()
     # algo4()
     # test()
