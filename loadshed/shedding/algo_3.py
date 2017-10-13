@@ -1,150 +1,127 @@
-import pandas as pd
-import os
-from random import randint
-from matplotlib import pyplot as plt
-from pprint import pprint
+"""
+Created on Thu Sep 21 15:34:01 2017
 
-# FILE_PATH   = os.path.join(os.getcwd(),'data','lstrial_tiny.h5')
-# LOAD_SEG    = 1
-FILE_PATH   = os.path.join(os.getcwd(),'data','ls_complete.h5')
-LOAD_SEG    = 100
-PAUSE_PRINT = False
+@author: Ola
+"""
+from utils import db
+import gb, random
+from data import data_access
+from collections import Counter
+import operator
 
-def form_groups(date_hour_group,avg_h_cons,cut,shedding={}):
-    groups = []
-    #Iterate the rows
-    houses = [[row['house_id'],row['value']] for index,row in date_hour_group.iterrows()]
-    while len(houses) :
-        group = []
-        while sum( [h[1] for h in group]) <= cut and len(houses) :
-            i = randint(0,len(houses)-1)
-            group.append(houses[i]+[shedding.get(houses[i][0],0)])
-            shedding[houses[i][0]] = shedding.get(houses[i][0],0)
-            del houses[i]
-        groups.append(group)
-    return groups,shedding
+class Shedding:
+    def __init__(self, hour_uses, n_house):
+        self.hour_uses = hour_uses
+        self.threshold = None
+        self.n_house = n_house
+        self.shedded_list = set()  # an empty set (of house ids)
+        self.n_highests = []
+        self.n_mediums = []
+        self.n_lowests = []
+        self.mosts = []
+        self.leasts = []
+        self.deficits = []
+        self.loads_cut = []
+        self.highest_houseids = []
+        self.medium_houseids = []
+        self.lowest_houseids = []
+        self.n_highest = 0
+        self.n_medium = 0
+        self.n_lowest = 0
+        self.shedding_range = 0
+        self.n_shedding = 0
+        self.daily_mean = data_access.abc()
 
+    def calc_threshold(self, hour_uses):
+        """
+        calc average consumption value and put it to self.threshold
+        :return: nothing
+        """
+        self.threshold = self.daily_mean[hour_uses.date]
+        # self.threshold = hour_use.mean()
 
+    def do_hour_shedding(self, hour_use):
+        """
 
+        :param hour_use: an HourUse object
+        :return:
+        """
+        if hour_use.total_value <= self.threshold:
+            return
+        cut = hour_use.total_value - self.threshold
+        if cut > 0:
+            self.deficits.append(cut)
+        hour_shedded_list = set()
+        load_cut = 0  ##
+        while cut > 0:
+            i = random.randint(0, self.n_house)
+            house_id = hour_use.house_id(i)
+            if house_id is not None and house_id not in self.shedded_list and house_id not in hour_shedded_list:
+                cut -= hour_use.value(i)
+                load_cut += hour_use.value(i)  ##
+                self.shedded_list.add(house_id)
+                hour_shedded_list.add(house_id)
+                p = hour_use.percent(i)
+                if p >= gb.T_level2:
+                    self.n_highest += 1
+                    self.highest_houseids.append(house_id)
+                elif gb.T_level1 < p < gb.T_level2:
+                    self.n_medium += 1
+                    self.medium_houseids.append(house_id)
+                elif p <= gb.T_level1:
+                    self.n_lowest += 1
+                    self.lowest_houseids.append(house_id)
+                db.inline_verydetail(f'{house_id:3} {cut:6.2f}')
+                db.line_verydetail(f' [{self.n_highest:2} {self.n_medium:2} {self.n_lowest:2}]')
+            # i += 1
+            # if i == hour_use.length:
+            #     i = 0
+                # db.line_verydetail('     i=0')
+            if len(self.shedded_list) == self.n_house:  # No more houses to shed is empty
+                self.shedded_list = set()
+            #     i = 0
+            #     db.line_verydetail('     shedded_list=empty')
+        self.loads_cut.append(load_cut)  ##
+        self.n_shedding += 1
+        if self.n_shedding % 100 == 0:  #### CHANGE TO 100 or n when needed
+            self.n_highests.append(self.n_highest)
+            self.n_mediums.append(self.n_medium)
+            self.n_lowests.append(self.n_lowest)
+            self.shedding_range += 1
+            self.n_highest = self.n_medium = self.n_lowest = 0
 
-def load_set():
-    '''
-    Load the data
-    '''
-    df                  = pd.read_hdf(FILE_PATH)
+            db.line_verydetail(f'{self.lowest_houseids + self.medium_houseids + self.highest_houseids}')
+            dd = self.lowest_houseids + self.medium_houseids + self.highest_houseids
+            cnt = Counter()
+            for d in dd:
+                cnt[d] += 1
+            sorted_cnt = sorted(cnt.items(), key=operator.itemgetter(1))
+            # print(sorted_cnt) # House IDs and frequencies of shedded houses
+            self.mosts.append(sorted_cnt[0][1])  # Number of sheds of house most shedded after n_shedding sheds
+            self.leasts.append(sorted_cnt[-1][1])  # Number of sheds of house least shedded after n_shedding sheds
 
-    '''
-    Calculate the hourely average
-    '''
-    date_hour_groups    = df.groupby(['date','hour'])
-    total_cons          = [date_hour_groups.get_group((a,b))['value'].sum() for a,b in date_hour_groups.groups ]
-    avg_h_cons          = sum(total_cons)/len(total_cons) *1.0
-    house_count         = len(df['house_id'].unique())
-    '''
-    Create the groups
-    '''
-    shedding = {}
-    #For each hour
-    loads = 1
-    last_df = None
-    full_df = None
-    number_shed = 0
-    x = []
-    y = []
-    ym = []
-    yx = []
-    for a,b in date_hour_groups.groups :
-        print ('*'*60)
-        print ('{} - {} - {}'.format(loads,a,b))
-        try :
-            avg_h_cons = df.loc[df['date'] == a]['value'].mean()*house_count
+            del self.lowest_houseids[:]
+            del self.medium_houseids[:]
+            del self.highest_houseids[:]
 
-            date_hour_group  = date_hour_groups.get_group((a,b))
-            h_cons = date_hour_group['value'].sum()
+            # db.line_verydetail(f'{self.highest_houseids}')
+            # db.line_verydetail(f'{self.medium_houseids}')
+            # db.line_verydetail(f'{self.lowest_houseids}')
+            # db.line_verydetail(f'{self.lowest_houseids + self.medium_houseids + self.highest_houseids}')
+            # dd = shedding.lowest_houseids + shedding.medium_houseids + shedding.highest_houseids
 
-            cut = h_cons - avg_h_cons
+    def do_shedding(self, ):
+        """
+        Iterate over the data (ie uses, every hour) and do the shedding
+        :return:
+        """
+        for i, hour_use in enumerate(
+                self.hour_uses):  # hour_use is a HourUse object (with house_ids, values, and total_value)
+            db.line_detail('hour: {}'.format(i))
+            self.calc_threshold(hour_use)
+            self.do_hour_shedding(hour_use)
 
-            if h_cons >= avg_h_cons :
-                #Form groups
-                groups,shedding = form_groups(date_hour_group,avg_h_cons,cut,shedding)
-
-                #Shed, by the cumulative number of sheds in the group
-                shed_sums = [[sum([h[2] for h in groups[i]]),i] for i in range(0,len(groups))]
-                min_shed  = min([g[0] for g in shed_sums])
-                g_index = [g[1] for g in shed_sums if g[0] == min_shed][0]
-
-                #shed
-
-                for h in groups[g_index] :
-                    h[2] += 1
-                    shedding[h[0]] = h[2]
-
-                for hs in groups[g_index] :
-                    print('ID : {:>10.0f}, CONS : {:>10.2f}, SHED : {:>10.2f}'.format(hs[0],hs[1],hs[2]))
-                number_shed +=len(groups[g_index])
-
-                print ('CUT : {:>10.2f}, CONSUMPTION {:>10.2f}'.format(cut,h_cons))
-                loads +=1
-
-            if loads %LOAD_SEG == 0 :
-                full_df = pd.DataFrame(list(shedding.items()),columns = ['house','shedding']).set_index('house')
-                if last_df is None :
-                    last_df = full_df.copy(True)
-                    last_df['shedding'] = 0
-
-                now_df = full_df.subtract(last_df,axis=1)
-                now_df['total'] = full_df['shedding']
-                last_df = full_df.copy(True)
-
-
-
-                print ('*'*60)
-                print ('LAST {}/{} LOADS '.format(LOAD_SEG,loads))
-
-                print ('MAX : HOUSE {}, SHEDS {}'.format(now_df['shedding'].argmax(),now_df['shedding'].max()))
-                print ('MIN : HOUSE {}, SHEDS {}'.format(now_df['shedding'].argmin(),now_df['shedding'].min()))
-                print ('NUMBER OF HOUSES SHED : {}'.format(number_shed))
-                x.append(loads)
-                y.append(number_shed)
-                yx.append(now_df['shedding'].max())
-                ym.append(now_df['shedding'].min())
-                number_shed = 0
-
-            if PAUSE_PRINT :
-                input()
-        except :
-            pass
-
-    print ('*'*60)
-    print ('TOTAL LOADS')
-    print ('MAX : HOUSE {}, SHEDS {}'.format(full_df['shedding'].argmax(),full_df['shedding'].max()))
-    print ('MIN : HOUSE {}, SHEDS {}'.format(full_df['shedding'].argmin(),full_df['shedding'].min()))
-    total_shed = len(full_df.loc[full_df['shedding'] != 0])
-    print ('TOTAL HOUSES SHED : {}'.format(total_shed))
-    fig, ax = plt.subplots()
-    x = [int(_x) for _x in x]
-    # x = [i-LOAD_SEG for i in x]
-    print (yx)
-    print (ym)
-    print (y)
-
-    ticks = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-
-    plt.bar(x,y,width=LOAD_SEG/2.0,color='g',align='center',label = 'Sheds')
-    plt.xlabel('Every 100 shedding events')
-    plt.ylabel('Number of households shed')
-    plt.xticks(ticks, rotation='horizontal')
-    plt.ylim([0, max(y)* 1.3])
-    plt.show()
-
-    p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
-    p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
-    plt.xlabel('Every 100 shedding events')
-    plt.ylabel('Number of households shed')
-    plt.xticks(ticks, rotation='horizontal')
-    plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
-               fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
-    plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
-    plt.show()
-
-
+            # db.line_verydetail(f'{self.lowest_houseids}')
+            # dd = self.lowest_houseids + self.medium_houseids + self.highest_houseids
+            # db.line_verydetail(f'{dd}')
+            # print (len(dd))

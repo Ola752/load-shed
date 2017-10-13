@@ -4,10 +4,11 @@ Created on Mon Jul 24 11:59:31 2017
 @author: Ola
 """
 from utils import db
-import gb, random
+import gb
 from data import data_access
 from collections import Counter
 import operator
+
 
 class Shedding:
     def __init__(self, hour_uses, n_house):
@@ -20,6 +21,8 @@ class Shedding:
         self.n_lowests = []
         self.mosts = []
         self.leasts = []
+        self.deficits = []
+        self.loads_cut = []
         self.highest_houseids = []
         self.medium_houseids = []
         self.lowest_houseids = []
@@ -47,12 +50,16 @@ class Shedding:
         if hour_use.total_value <= self.threshold:
             return
         cut = hour_use.total_value - self.threshold
+        if cut > 0:
+            self.deficits.append(cut)
+        i = 0
         hour_shedded_list = set()
+        load_cut = 0  ##
         while cut > 0:
-            i = random.randint(0, self.n_house)
             house_id = hour_use.house_id(i)
             if house_id is not None and house_id not in self.shedded_list and house_id not in hour_shedded_list:
                 cut -= hour_use.value(i)
+                load_cut += hour_use.value(i) ##
                 self.shedded_list.add(house_id)
                 hour_shedded_list.add(house_id)
                 p = hour_use.percent(i)
@@ -67,16 +74,17 @@ class Shedding:
                     self.lowest_houseids.append(house_id)
                 db.inline_verydetail(f'{house_id:3} {cut:6.2f}')
                 db.line_verydetail(f' [{self.n_highest:2} {self.n_medium:2} {self.n_lowest:2}]')
-            # i += 1
-            # if i == hour_use.length:
-            #     i = 0
+            i += 1
+            if i == hour_use.length:
+                i = 0
                 # db.line_verydetail('     i=0')
             if len(self.shedded_list) == self.n_house:  # No more houses to shed is empty
                 self.shedded_list = set()
-            #     i = 0
-            #     db.line_verydetail('     shedded_list=empty')
+                i = 0
+                db.line_verydetail('     shedded_list=empty')
+        self.loads_cut.append(load_cut) ##
         self.n_shedding += 1
-        if self.n_shedding % 1 == 0:
+        if self.n_shedding % 100 == 0:  #### CHANGE TO 100 or n when needed
             self.n_highests.append(self.n_highest)
             self.n_mediums.append(self.n_medium)
             self.n_lowests.append(self.n_lowest)

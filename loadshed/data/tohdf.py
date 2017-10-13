@@ -24,8 +24,8 @@ def csv2hdf_(df, fn):
 
 
 if __name__ == '__main__':
-    # filename = 'ls'
-    filename = 'ls_debug'
+    filename = 'ls_complete_2'
+    # filename = 'ls_debug'
     csv_file = f'{filename}.csv'
     hdf_file = f'{filename}.h5'
     current_dir = os.path.dirname(__file__)
