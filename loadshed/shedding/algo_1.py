@@ -164,7 +164,7 @@ def load_set():
 
     ticks = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
 
-    plt.bar(x,y,width=LOAD_SEG/2.0,color='g',align='center',label = 'Sheds')
+    plt.bar(x,y,width=LOAD_SEG/2.0,color='b',align='center',label = 'Sheds')
     plt.xlabel('Every 100 shedding events')
     plt.ylabel('Number of households shed')
     plt.xticks(ticks, rotation='horizontal')

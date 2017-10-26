@@ -11,6 +11,7 @@ from shedding.algo_3 import Shedding     # Use this when running algo2 or sheddi
 import gb
 from shedding import algo_1
 from shedding import algo_4
+from shedding import algo_X
 from utils import db
 from utils.db import DebugMode
 from utils.utils import *

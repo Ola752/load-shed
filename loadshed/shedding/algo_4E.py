@@ -5,11 +5,9 @@ Created on Sat Oct 14 09:33:14 2017
 """
 
 """
-This algorithm is an original that considers standard deviation in selecting
-households. The SD of weekly consumption is calculated, and households who 
-consume above a threshold (mean + 2*SD) during a hour of shedding are omitted
-from the shedding! Thus, the difference between the number of times households 
-are selected is a bit higher, even though two lists try to make it equal.
+Unlike algo_4, this algorithm does not consider standard deviation in selecting
+households. Thus, all households are up for selection, meaning that the number 
+of times each household is selected is equal (or with a difference of 1 max
 """
 
 import pandas as pd
@@ -25,14 +23,15 @@ import operator
 # FILE_PATH   = os.path.join(os.getcwd(),'data','testdata_algo4.h5')
 FILE_PATH    = os.path.join(os.getcwd(),'data','ls_complete_2.h5')
 
+
 DATE_FORMAT     = '%Y-%m-%d-%H'
 #DATE_FORMAT     = '%d/%m/%Y-%H'
 
-LOAD_SEG    = 1
+LOAD_SEG    = 1031
 PAUSE_PRINT = False
 
 exclude_a = []
-exclude_b = []
+# exclude_b = []
 take_always = None
 
 NRML = {}
@@ -89,7 +88,7 @@ def form_groups(date_hour_group,avg_h_cons,cut,shedding):
         #Iterate the rows
         if len(exclude_a) == len(date_hour_group.index) :
             exclude_a.clear()
-        houses = [[row['house_id'],row['value'],datetime.strptime(row['date']+'-'+str(row['hour']),DATE_FORMAT)] for index,row in date_hour_group.iterrows() if row['house_id'] not in exclude_a and  row['house_id'] not in exclude_b]
+        houses = [[row['house_id'],row['value'],datetime.strptime(row['date']+'-'+str(row['hour']),DATE_FORMAT)] for index,row in date_hour_group.iterrows() if row['house_id'] not in exclude_a]
 
         if sum( [h[1] for h in houses]) < cut :
              exclude_a.clear()
@@ -97,7 +96,7 @@ def form_groups(date_hour_group,avg_h_cons,cut,shedding):
 
              houses = [[row['house_id'],row['value'],datetime.strptime(row['date']+'-'+str(row['hour']),DATE_FORMAT)] for index,row in date_hour_group.iterrows() if \
                 row['house_id'] not in exclude_a and  \
-                row['house_id'] not in exclude_b and  \
+                # row['house_id'] not in exclude_b and  \
                 row['house_id'] not in [x[0] for x in take_always]
                 ]
 
@@ -134,14 +133,14 @@ def form_groups(date_hour_group,avg_h_cons,cut,shedding):
     return groups[:1],shedding
 
 def calc_stds(group,hour):
-    exclude_b.clear()
+    # exclude_b.clear()
     for g in group.groupby(['house_id']).groups :
         std  = np.std(group.loc[group['house_id'] == g]['value'])
         mean =  group.loc[group['house_id'] == g]['value'].mean()
         h    =  [x['value'] for i,x in group.loc[(group['house_id'] == g) & (group['hour'] == hour)].iterrows()] [0]
 
-        if h > (mean+2*std) :
-            exclude_b.append(g)
+        # if h > (mean+2*std) :
+        #     exclude_b.append(g)
 
 def load_set():
 
@@ -221,8 +220,8 @@ def load_set():
                 print ('CUT : {:>10.2f}, CONSUMPTION {:>10.2f}'.format(cut,h_cons))
                 print ('Excluded SHED')
                 print (exclude_a)
-                print ('Excluded STD')
-                print (exclude_b)
+                # print ('Excluded STD')
+                # print (exclude_b)
                 loads +=1
 
                 loads_cut.append(load_cut)  ##
@@ -286,43 +285,43 @@ def load_set():
     # plt.show()
 
 
-    # ticks = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-    #
-    # plt.bar(x,y,width=LOAD_SEG/2.0,color='b',align='center',label = 'Sheds')
-    # plt.xlabel('Every 100 shedding events')
-    # plt.ylabel('Number of households shed')
-    # plt.xticks(ticks, rotation='horizontal')
-    # plt.ylim([0, max(y)* 1.3])
-    # plt.show()
-    #
-    # p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
-    # p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
-    # plt.xlabel('Every 100 shedding events')
-    # plt.ylabel('Number of households shed')
-    # plt.xticks(ticks, rotation='horizontal')
-    # plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
-    #            fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
-    # plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
-    # plt.show()
-    #
-    #
-    #
-    # plt.bar(x,y,width=LOAD_SEG/2.0,color='g',align='center',label = 'Sheds')
-    # plt.xlabel('Every 100 shedding events')
-    # plt.ylabel('Number of households shed')
-    # plt.xticks(x, rotation='horizontal')
-    # plt.ylim([0, max(y)* 1.3])
-    # plt.show()
-    #
-    # p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
-    # p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
-    # plt.xlabel('Every 100 shedding events')
-    # plt.ylabel('Number of households shed')
-    # plt.xticks(x, rotation='horizontal')
-    # plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
-    #            fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
-    # plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
-    # plt.show()
+    ticks = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+
+    plt.bar(x,y,width=LOAD_SEG/2.0,color='b',align='center',label = 'Sheds')
+    plt.xlabel('Every 100 shedding events')
+    plt.ylabel('Number of households shed')
+    plt.xticks(ticks, rotation='horizontal')
+    plt.ylim([0, max(y)* 1.3])
+    plt.show()
+
+    p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
+    p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
+    plt.xlabel('Every 100 shedding events')
+    plt.ylabel('Number of households shed')
+    plt.xticks(ticks, rotation='horizontal')
+    plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
+               fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
+    plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
+    plt.show()
+
+
+
+    plt.bar(x,y,width=LOAD_SEG/2.0,color='g',align='center',label = 'Sheds')
+    plt.xlabel('Every 100 shedding events')
+    plt.ylabel('Number of households shed')
+    plt.xticks(x, rotation='horizontal')
+    plt.ylim([0, max(y)* 1.3])
+    plt.show()
+
+    p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
+    p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
+    plt.xlabel('Every 100 shedding events')
+    plt.ylabel('Number of households shed')
+    plt.xticks(x, rotation='horizontal')
+    plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
+               fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
+    plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
+    plt.show()
 
 
 
@@ -343,20 +342,20 @@ def load_set():
     # plt.show()
 
 
-    # For plotting deficits AND values of loads shed during first 50 individual loadsheds
-    ax = plt.subplot(111)
-    w = 0.4
-    plt.xlabel('Individual shedding events')
-    plt.ylabel('Loads in kW')
-    label_x = range(1, 51)
-    ax.bar(np.asarray(label_x) - w/2, deficits[:50], width=w, color='g', align='center', label='Deficits')
-    ax.bar(np.asarray(label_x) + w/2, loads_cut[:50], width=w, color='r', align='center', label='Loads cut')
-    plt.xticks([x - 1 for x in label_x][0::5], rotation='horizontal')
-    plt.legend = plt.legend(loc='upper right', shadow=True)
-    plt.ylim([0, (max(max(deficits[:50]), max(loads_cut[:50])) * 1.3)])
-    plt.xlim([(min(label_x) - w), (max(label_x) + w)])
-    # ax.autoscale(tight=True)
-    plt.show()
+    # # For plotting deficits AND values of loads shed during first 50 individual loadsheds
+    # ax = plt.subplot(111)
+    # w = 0.4
+    # plt.xlabel('Individual shedding events')
+    # plt.ylabel('Loads in kW')
+    # label_x = range(1, 51)
+    # ax.bar(np.asarray(label_x) - w/2, deficits[:50], width=w, color='g', align='center', label='Deficits')
+    # ax.bar(np.asarray(label_x) + w/2, loads_cut[:50], width=w, color='r', align='center', label='Loads cut')
+    # plt.xticks([x - 1 for x in label_x][0::5], rotation='horizontal')
+    # plt.legend = plt.legend(loc='upper right', shadow=True)
+    # plt.ylim([0, (max(max(deficits[:50]), max(loads_cut[:50])) * 1.3)])
+    # plt.xlim([(min(label_x) - w), (max(label_x) + w)])
+    # # ax.autoscale(tight=True)
+    # plt.show()
 
 
 
@@ -372,12 +371,12 @@ def load_set():
 
 
 
-    # For plotting number of households shed per unit load cut (first 50 sheds)
-    w2 = 0.5
-    plt.xlabel('Individual shedding events')
-    plt.ylabel('Households shed per unit kW load cut')
-    label_x = range(1, 51)
-    plt.bar(label_x, [x/y for x, y in zip(numbers_shed[:50], deficits[:50])], width = w2, color='b')
-    plt.xlim([(min(label_x) - w2), (max(label_x) + w2)])
-    plt.ylim([0,1])
-    plt.show()
+    # # For plotting number of households shed per unit load cut (first 50 sheds)
+    # w2 = 0.5
+    # plt.xlabel('Individual shedding events')
+    # plt.ylabel('Households shed per unit kW load cut')
+    # label_x = range(1, 51)
+    # plt.bar(label_x, [x/y for x, y in zip(numbers_shed[:50], deficits[:50])], width = w2, color='b')
+    # plt.xlim([(min(label_x) - w2), (max(label_x) + w2)])
+    # plt.ylim([0,1])
+    # plt.show()

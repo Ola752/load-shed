@@ -1,15 +1,13 @@
 """
-Created on Sat Oct 14 09:33:14 2017
+Created on Sat Oct 7 16:05:01 2017
 
 @author: Ola
 """
 
 """
-This algorithm is an original that considers standard deviation in selecting
-households. The SD of weekly consumption is calculated, and households who 
-consume above a threshold (mean + 2*SD) during a hour of shedding are omitted
-from the shedding! Thus, the difference between the number of times households 
-are selected is a bit higher, even though two lists try to make it equal.
+This algorithm considers the day ahead consumption alone (not like algo_4 and algo_4E
+that consider 1 week's data. However, this algorithm omits households who's consumption 
+is above a threshold determined by mean + 2*SD of the day ahead's consumption.
 """
 
 import pandas as pd
@@ -18,114 +16,35 @@ from random import randint
 from matplotlib import pyplot as plt
 from pprint import pprint
 import numpy as np
-from datetime import datetime
-import operator
 
+FILE_PATH = os.path.join(os.getcwd(), 'data', 'ls_complete_2.h5')
+LOAD_SEG = 100
 # FILE_PATH   = os.path.join(os.getcwd(),'data','lstrial_tiny.h5')
-# FILE_PATH   = os.path.join(os.getcwd(),'data','testdata_algo4.h5')
-FILE_PATH    = os.path.join(os.getcwd(),'data','ls_complete_2.h5')
-
-DATE_FORMAT     = '%Y-%m-%d-%H'
-#DATE_FORMAT     = '%d/%m/%Y-%H'
-
-LOAD_SEG    = 1
+# LOAD_SEG    = 1
 PAUSE_PRINT = False
 
 exclude_a = []
 exclude_b = []
-take_always = None
-
-NRML = {}
-
-NO_LISTS = False
-
-
-def create_df(path = FILE_PATH):
-    df          = pd.read_hdf(path)
-    df["date"]  = df["date"].map(str) + '-' +df["hour"].map(str)
-    df['date']  = pd.to_datetime(df['date'],format=DATE_FORMAT)
-    df          = df.set_index('date')
-
-    return df
-
-def group_A(df):
-    global NRML
-    result = {}
-    for g1,n1 in df.groupby([df.index.month]) :
-        result[g1] = {}
-        mxs = {}
-        for g2,n2 in n1.groupby([n1.index.weekday]) :
-            result[g1][g2] = {}
-            for g3,n3 in n2.groupby([n2.index.hour]) :
-                result[g1][g2][g3]  = {}
-                for g4,n4 in n3.groupby([n3['house_id']]):
-                    mean = n4['value'].mean()
-                    result[g1][g2][g3][g4] = n4['value'].mean()
-                    mxs[g4] = mean if mean > mxs.get(g4,0) else  mxs.get(g4,0)
-
-        for wd in result[g1] :
-            for hr in result[g1][wd]:
-                for hs in mxs :
-                    result[g1][wd][hr][hs] = result[g1][wd][hr][hs]/mxs[hs]*1.0
-
-    NRML = result
-    return result
-
-
-def calc_normalized():
-    df = create_df()
-    print ('Creating Normalized list')
-    group_A(df)
-    print ('Done')
 
 def form_groups(date_hour_group,avg_h_cons,cut,shedding):
-    global take_always
-    take_always = None
+    #Iterate the rows
+    if len(exclude_a) == len(date_hour_group.index) :
+        exclude_a.clear()
+    houses = [[row['house_id'],row['value']] for index,row in date_hour_group.iterrows() if row['house_id'] not in exclude_a and  row['house_id'] not in exclude_b]
 
-    if NO_LISTS:
-        houses = [[row['house_id'],row['value'],datetime.strptime(row['date']+'-'+str(row['hour']),DATE_FORMAT)] for index,row in date_hour_group.iterrows()]
-
-    else :
-        #Iterate the rows
-        if len(exclude_a) == len(date_hour_group.index) :
-            exclude_a.clear()
-        houses = [[row['house_id'],row['value'],datetime.strptime(row['date']+'-'+str(row['hour']),DATE_FORMAT)] for index,row in date_hour_group.iterrows() if row['house_id'] not in exclude_a and  row['house_id'] not in exclude_b]
-
-        if sum( [h[1] for h in houses]) < cut :
-             exclude_a.clear()
-             take_always = houses
-
-             houses = [[row['house_id'],row['value'],datetime.strptime(row['date']+'-'+str(row['hour']),DATE_FORMAT)] for index,row in date_hour_group.iterrows() if \
-                row['house_id'] not in exclude_a and  \
-                row['house_id'] not in exclude_b and  \
-                row['house_id'] not in [x[0] for x in take_always]
-                ]
-
+    if sum( [h[1] for h in houses]) < cut :
+         exclude_a.clear()
+         houses = [[row['house_id'],row['value']] for index,row in date_hour_group.iterrows() if row['house_id'] not in exclude_a and  row['house_id'] not in exclude_b]
 
     groups = []
 
-    #Get the right normalized group
-    nrml = NRML[houses[0][2].month][houses[0][2].weekday()][houses[0][2].hour]
-    nrml = {x:nrml[x] for x in nrml if x in [y[0] for y in houses]}
-    nrml = list([list(x) for x in sorted(nrml.items(), key=operator.itemgetter(1))])
-    for x in nrml :
-        value = [y[1] for y in houses if y[0]==x[0]][0]
-        x.insert(1,value)
-
-    houses = nrml
     while len(houses) :
         group = []
-        if take_always:
-            for al_tk in take_always :
-                group.append(al_tk+[shedding.get(al_tk[0],0)])
-                shedding[al_tk[0]] = shedding.get(al_tk[0],0)
-
         while sum( [h[1] for h in group]) <= cut and len(houses) :
-            i = 0
+            i = randint(0,len(houses)-1)
             group.append(houses[i]+[shedding.get(houses[i][0],0)])
             shedding[houses[i][0]] = shedding.get(houses[i][0],0)
             del houses[i]
-
         groups.append(group)
 
     if sum([ h[1] for h in groups[-1] ]) < cut :
@@ -144,12 +63,10 @@ def calc_stds(group,hour):
             exclude_b.append(g)
 
 def load_set():
-
     '''
     Load the data
     '''
     df                  = pd.read_hdf(FILE_PATH)
-    calc_normalized()
 
     '''
     Calculate the hourely average
@@ -182,9 +99,8 @@ def load_set():
         try :
             avg_h_cons = df.loc[df['date'] == a]['value'].mean()*house_count
 
-            if not NO_LISTS:
-                #stds = [np.std(df.loc[df['date'] == a]['value'])]
-                calc_stds(df.loc[df['date'] == a],b)
+            #stds = [np.std(df.loc[df['date'] == a]['value'])]
+            calc_stds(df.loc[df['date'] == a],b)
 
             date_hour_group  = date_hour_groups.get_group((a,b))
             h_cons = date_hour_group['value'].sum()
@@ -192,29 +108,28 @@ def load_set():
             cut = h_cons - avg_h_cons
             load_cut = 0  ##
 
+
             if h_cons >= avg_h_cons :
                 deficits.append(cut)  ##
                 #Form groups
                 groups,shedding = form_groups(date_hour_group,avg_h_cons,cut,shedding)
 
                 #Shed, by the cumulative number of sheds in the group
-                shed_sums = [[sum([h[3] for h in groups[i]]),i] for i in range(0,len(groups))]
+                shed_sums = [[sum([h[2] for h in groups[i]]),i] for i in range(0,len(groups))]
                 min_shed  = min([g[0] for g in shed_sums])
                 g_index = [g[1] for g in shed_sums if g[0] == min_shed][0]
 
                 #shed
 
                 for h in groups[g_index] :
-                    h[3] += 1
-                    shedding[h[0]] = h[3]
-                    if not NO_LISTS :
-
-                        if not take_always or  h[0] not in [x[0] for x in take_always]:
-                            exclude_a.append(h[0])
+                    h[2] += 1
+                    shedding[h[0]] = h[2]
+                    exclude_a.append(h[0])
 
                 for hs in groups[g_index] :
+                    print('ID : {:>10.0f}, CONS : {:>10.2f}, SHED : {:>10.2f}'.format(hs[0],hs[1],hs[2]))
                     load_cut += hs[1]  ##
-                    print('ID : {:>10.0f}, CONS : {:>10.2f}, NRMLZD AVERAGE : {:>10.2f}, SHED : {:>10.2f}'.format(hs[0],hs[1],hs[2],hs[3]))
+
                 number_shed +=len(groups[g_index])
                 num_shed = len(groups[g_index])  ##
 
@@ -225,8 +140,9 @@ def load_set():
                 print (exclude_b)
                 loads +=1
 
+
                 loads_cut.append(load_cut)  ##
-                numbers_shed.append(num_shed)  ##
+                numbers_shed.append(num_shed) ##
 
 
             if loads % LOAD_SEG == 0 and loads not in x :
@@ -273,40 +189,27 @@ def load_set():
     print (ym)
     print (y)
 
-    # plt.bar(x,y,width=LOAD_SEG/2.0,color='r',align='center')
-    # plt.title('Sheds')
-    # plt.show()
-    #
-    # p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='g' )
-    # plt.title('Max')
-    # plt.show()
-    #
-    # p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='b')
-    # plt.title('min')
-    # plt.show()
+    ticks = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+
+    plt.bar(x,y,width=LOAD_SEG/2.0,color='b',align='center',label = 'Sheds')
+    plt.xlabel('Every 100 shedding events')
+    plt.ylabel('Number of households shed')
+    plt.xticks(ticks, rotation='horizontal')
+    plt.ylim([0, max(y)* 1.3])
+    plt.show()
+
+    p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
+    p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
+    plt.xlabel('Every 100 shedding events')
+    plt.ylabel('Number of households shed')
+    plt.xticks(ticks, rotation='horizontal')
+    plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
+               fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
+    plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
+    plt.show()
 
 
-    # ticks = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-    #
-    # plt.bar(x,y,width=LOAD_SEG/2.0,color='b',align='center',label = 'Sheds')
-    # plt.xlabel('Every 100 shedding events')
-    # plt.ylabel('Number of households shed')
-    # plt.xticks(ticks, rotation='horizontal')
-    # plt.ylim([0, max(y)* 1.3])
-    # plt.show()
-    #
-    # p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
-    # p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
-    # plt.xlabel('Every 100 shedding events')
-    # plt.ylabel('Number of households shed')
-    # plt.xticks(ticks, rotation='horizontal')
-    # plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
-    #            fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
-    # plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
-    # plt.show()
-    #
-    #
-    #
+
     # plt.bar(x,y,width=LOAD_SEG/2.0,color='g',align='center',label = 'Sheds')
     # plt.xlabel('Every 100 shedding events')
     # plt.ylabel('Number of households shed')
@@ -326,7 +229,6 @@ def load_set():
 
 
 
-
     # # For plotting deficits AND values of loads shed during first x individual loadsheds (Test DATA)
     # label_x = range(1,8)
     # ax = plt.subplot(111)
@@ -343,20 +245,20 @@ def load_set():
     # plt.show()
 
 
-    # For plotting deficits AND values of loads shed during first 50 individual loadsheds
-    ax = plt.subplot(111)
-    w = 0.4
-    plt.xlabel('Individual shedding events')
-    plt.ylabel('Loads in kW')
-    label_x = range(1, 51)
-    ax.bar(np.asarray(label_x) - w/2, deficits[:50], width=w, color='g', align='center', label='Deficits')
-    ax.bar(np.asarray(label_x) + w/2, loads_cut[:50], width=w, color='r', align='center', label='Loads cut')
-    plt.xticks([x - 1 for x in label_x][0::5], rotation='horizontal')
-    plt.legend = plt.legend(loc='upper right', shadow=True)
-    plt.ylim([0, (max(max(deficits[:50]), max(loads_cut[:50])) * 1.3)])
-    plt.xlim([(min(label_x) - w), (max(label_x) + w)])
-    # ax.autoscale(tight=True)
-    plt.show()
+    # # For plotting deficits AND values of loads shed during first 50 individual loadsheds
+    # ax = plt.subplot(111)
+    # w = 0.4
+    # plt.xlabel('Individual shedding events')
+    # plt.ylabel('Loads in kW')
+    # label_x = range(1, 51)
+    # ax.bar(np.asarray(label_x) - w/2, deficits[:50], width=w, color='g', align='center', label='Deficits')
+    # ax.bar(np.asarray(label_x) + w/2, loads_cut[:50], width=w, color='r', align='center', label='Loads cut')
+    # plt.xticks([x - 1 for x in label_x][0::5], rotation='horizontal')
+    # plt.legend = plt.legend(loc='upper right', shadow=True)
+    # plt.ylim([0, (max(max(deficits[:50]), max(loads_cut[:50])) * 1.3)])
+    # plt.xlim([(min(label_x) - w), (max(label_x) + w)])
+    # # ax.autoscale(tight=True)
+    # plt.show()
 
 
 
@@ -372,12 +274,12 @@ def load_set():
 
 
 
-    # For plotting number of households shed per unit load cut (first 50 sheds)
-    w2 = 0.5
-    plt.xlabel('Individual shedding events')
-    plt.ylabel('Households shed per unit kW load cut')
-    label_x = range(1, 51)
-    plt.bar(label_x, [x/y for x, y in zip(numbers_shed[:50], deficits[:50])], width = w2, color='b')
-    plt.xlim([(min(label_x) - w2), (max(label_x) + w2)])
-    plt.ylim([0,1])
-    plt.show()
+    # # For plotting number of households shed per unit load cut (first 50 sheds)
+    # w2 = 0.5
+    # plt.xlabel('Individual shedding events')
+    # plt.ylabel('Households shed per unit kW load cut')
+    # label_x = range(1, 51)
+    # plt.bar(label_x, [x/y for x, y in zip(numbers_shed[:50], deficits[:50])], width = w2, color='b')
+    # plt.xlim([(min(label_x) - w2), (max(label_x) + w2)])
+    # plt.ylim([0,1])
+    # plt.show()
