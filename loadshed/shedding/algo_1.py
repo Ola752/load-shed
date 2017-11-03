@@ -11,10 +11,10 @@ from matplotlib import pyplot as plt
 import numpy as np
 from pprint import pprint
 
-# FILE_PATH   = os.path.join(os.getcwd(),'data','lstrial_tiny.h5')
-# LOAD_SEG    = 1    #### USE TO PLOT INDIVIDUAL LOAD SHEDS
-FILE_PATH   = os.path.join(os.getcwd(),'data','ls_complete_2.h5')
-LOAD_SEG    = 100
+FILE_PATH   = os.path.join(os.getcwd(),'data','lstrial_tiny.h5')
+LOAD_SEG    = 1    #### USE TO PLOT INDIVIDUAL LOAD SHEDS
+# FILE_PATH   = os.path.join(os.getcwd(),'data','ls_complete_2.h5')
+# LOAD_SEG    = 100
 PAUSE_PRINT = False
 
 def form_groups(date_hour_group,avg_h_cons,cut,shedding={}):
@@ -112,8 +112,9 @@ def load_set():
                 numbers_shed.append(num_shed) ##
 
 
-            if loads %LOAD_SEG == 0 :
+            if loads % LOAD_SEG == 0 and loads not in x :
                 full_df = pd.DataFrame(list(shedding.items()),columns = ['house','shedding']).set_index('house')
+
                 if last_df is None :
                     last_df = full_df.copy(True)
                     last_df['shedding'] = 0
@@ -157,29 +158,31 @@ def load_set():
     fig, ax = plt.subplots()
     x = [int(_x) for _x in x]
     # x = [i-LOAD_SEG for i in x]
+
+    print (x)
     print (yx)
     print (ym)
     print (y)
 
 
-    ticks = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-
-    plt.bar(x,y,width=LOAD_SEG/2.0,color='b',align='center',label = 'Sheds')
-    plt.xlabel('Every 100 shedding events')
-    plt.ylabel('Number of households shed')
-    plt.xticks(ticks, rotation='horizontal')
-    plt.ylim([0, max(y)* 1.3])
-    plt.show()
-
-    p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
-    p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
-    plt.xlabel('Every 100 shedding events')
-    plt.ylabel('Number of households shed')
-    plt.xticks(ticks, rotation='horizontal')
-    plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
-               fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
-    plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
-    plt.show()
+    # ticks = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    #
+    # plt.bar(x,y,width=LOAD_SEG/2.0,color='b',align='center',label = 'Sheds')
+    # plt.xlabel('Every 100 shedding events')
+    # plt.ylabel('Number of households shed')
+    # plt.xticks(ticks, rotation='horizontal')
+    # plt.ylim([0, max(y)* 1.3])
+    # plt.show()
+    #
+    # p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
+    # p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
+    # plt.xlabel('Every 100 shedding events')
+    # plt.ylabel('Number of households shed')
+    # plt.xticks(ticks, rotation='horizontal')
+    # plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
+    #            fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
+    # plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
+    # plt.show()
 
 
 

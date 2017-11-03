@@ -10,6 +10,9 @@ from data.data_access import read_consumptions
 from shedding.algo_3 import Shedding     # Use this when running algo2 or shedding1
 import gb
 from shedding import algo_1
+from shedding import algo_1_1
+from shedding import algo_2_2
+from shedding import algo_3_2
 from shedding import algo_4
 from shedding import algo_X
 from utils import db
@@ -44,8 +47,8 @@ def go():
     # w1 = 0.5
     # plt.xlabel('Individual shedding events')
     # plt.ylabel('Number of households shed')
-    # label_x = range(1, 51)
-    # # label_x = range(1, 8)
+    # # label_x = range(1, 51)
+    # label_x = range(1, 8)
     # p1 = plt.bar(label_x, shedding.n_highests[:50], width = w1, color='g')
     # p2 = plt.bar(label_x, shedding.n_mediums[:50], width = w1, color='b', bottom = shedding.n_highests[:50])
     # p3 = plt.bar(label_x, shedding.n_lowests[:50], width = w1, color='r', bottom = [sum(x) for x in zip(shedding.n_highests[:50],shedding.n_mediums[:50])])
@@ -71,28 +74,28 @@ def go():
     # plt.show()
 
 
-    # For printing aggregated number of houses shed every 100 load sheds
-    plt.xlabel('Every 100 shedding events')
-    plt.ylabel('Number of households shed')
-    label_x = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-    plt.bar(label_x, [sum(x) for x in zip(shedding.n_highests, shedding.n_mediums, shedding.n_lowests)], width=50, color='g')
-    plt.ylim([0, max([sum(x) for x in zip(shedding.n_lowests, shedding.n_mediums, shedding.n_highests)]) * 1.3])
-    plt.xticks(label_x, rotation = 'horizontal')
-    plt.show()
-
-
-    # For printing aggregated x loadsheds in n groups B
-    plt.xlabel('Every 100 shedding events')
-    plt.ylabel('Number of households shed')
-    label_x = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-    # label_x = [100, 200, 300]
-    p1 = plt.bar(label_x, shedding.mosts, width=50, color='b')
-    p2 = plt.bar(label_x, shedding.leasts, width=50, color='r', bottom = shedding.mosts)
-    plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
-               fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
-    plt.ylim([0, max([sum(x) for x in zip(shedding.mosts,shedding.leasts)])*1.3])
-    plt.xticks(label_x, rotation = 'horizontal')
-    plt.show()
+    # # For printing aggregated number of houses shed every 100 load sheds
+    # plt.xlabel('Every 100 shedding events')
+    # plt.ylabel('Number of households shed')
+    # label_x = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    # plt.bar(label_x, [sum(x) for x in zip(shedding.n_highests, shedding.n_mediums, shedding.n_lowests)], width=50, color='g')
+    # plt.ylim([0, max([sum(x) for x in zip(shedding.n_lowests, shedding.n_mediums, shedding.n_highests)]) * 1.3])
+    # plt.xticks(label_x, rotation = 'horizontal')
+    # plt.show()
+    #
+    #
+    # # For printing aggregated x loadsheds in n groups B
+    # plt.xlabel('Every 100 shedding events')
+    # plt.ylabel('Number of households shed')
+    # label_x = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    # # label_x = [100, 200, 300]
+    # p1 = plt.bar(label_x, shedding.mosts, width=50, color='b')
+    # p2 = plt.bar(label_x, shedding.leasts, width=50, color='r', bottom = shedding.mosts)
+    # plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
+    #            fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
+    # plt.ylim([0, max([sum(x) for x in zip(shedding.mosts,shedding.leasts)])*1.3])
+    # plt.xticks(label_x, rotation = 'horizontal')
+    # plt.show()
 
 
     # # For plotting deficits AND values of loads shed during first x individual loadsheds (DEBUG DATA SET)
@@ -139,12 +142,16 @@ def go():
     # plt.show()
 
 
-
+    print ([sum(x) for x in zip(shedding.n_lowests[:50], shedding.n_mediums[:50], shedding.n_highests[:50])])
+    print ()
 
 
 if __name__ == '__main__':
     # go() # this can be used when running algo2 or algo3. Just change at the top!
     # algo_1.load_set()
+    # algo_1_1.load_set()
+    # algo_2_2.load_set()
+    # algo_3_2.load_set()
     algo_4.load_set()
     # algo3()
     # algo4()
