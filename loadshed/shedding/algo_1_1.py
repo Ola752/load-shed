@@ -339,20 +339,20 @@ def load_set():
     # plt.show()
 
 
-    # # For plotting deficits AND values of loads shed during first 50 individual loadsheds
-    # ax = plt.subplot(111)
-    # w = 0.4
-    # plt.xlabel('Individual shedding events')
-    # plt.ylabel('Loads in kW')
-    # label_x = range(1, 51)
-    # ax.bar(np.asarray(label_x) - w/2, deficits[:50], width=w, color='g', align='center', label='Deficits')
-    # ax.bar(np.asarray(label_x) + w/2, loads_cut[:50], width=w, color='r', align='center', label='Loads cut')
-    # plt.xticks([x - 1 for x in label_x][0::5], rotation='horizontal')
-    # plt.legend = plt.legend(loc='upper right', shadow=True)
-    # plt.ylim([0, (max(max(deficits[:50]), max(loads_cut[:50])) * 1.3)])
-    # plt.xlim([(min(label_x) - w), (max(label_x) + w)])
-    # # ax.autoscale(tight=True)
-    # plt.show()
+    # For plotting deficits AND values of loads shed during first 50 individual loadsheds
+    ax = plt.subplot(111)
+    w = 0.4
+    plt.xlabel('Individual shedding events')
+    plt.ylabel('Loads in kW')
+    label_x = range(1, 51)
+    ax.bar(np.asarray(label_x) - w/2, deficits[:50], width=w, color='y', align='center', label='Deficits')
+    ax.bar(np.asarray(label_x) + w/2, loads_cut[:50], width=w, color='r', align='center', label='Loads cut')
+    plt.xticks([x - 1 for x in label_x][0::5], rotation='horizontal')
+    plt.legend = plt.legend(loc='upper right', shadow=True)
+    plt.ylim([0, (max(max(deficits[:50]), max(loads_cut[:50])) * 1.3)])
+    plt.xlim([(min(label_x) - w), (max(label_x) + w)])
+    # ax.autoscale(tight=True)
+    plt.show()
 
 
 
@@ -377,3 +377,6 @@ def load_set():
     # plt.xlim([(min(label_x) - w2), (max(label_x) + w2)])
     # plt.ylim([0,1])
     # plt.show()
+
+    # dplc_1 = [x/y for x, y in zip(numbers_shed[:50], deficits[:50])]
+    # print (dplc_1)

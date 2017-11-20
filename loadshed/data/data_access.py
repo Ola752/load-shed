@@ -21,8 +21,8 @@ def find_houseid_max(uses):
 
 def read_hdf5():
     timing.start()
-    # filename = 'ls_complete.h5'
-    filename = 'lstrial_tiny.h5'
+    filename = 'ls_comp.h5'
+    # filename = 'lstrial_tiny.h5'
     uses = pd.read_hdf(filename, 'data', mode='r', columns=['date', 'hour', 'house_id', 'value'])
     pd.to_datetime(uses['date'])
     uses.value = uses.value.astype(float)
@@ -43,8 +43,8 @@ def read_consumptions():
     # filename = 'ls.h5'
     # uses = pd.read_hdf(filename, 'data', mode='r', columns=['date', 'hour', 'house_id', 'value'])
     current_dir = os.path.dirname(__file__)
-    # file_path = os.path.join(current_dir, 'ls_complete.h5')
-    file_path = os.path.join(current_dir, 'lstrial_tiny.h5')
+    file_path = os.path.join(current_dir, 'ls_comp.h5')
+    # file_path = os.path.join(current_dir, 'lstrial_tiny.h5')
     uses = pd.read_hdf(file_path, names=['date', 'hour', 'house_id', 'value'])  # dataframe (in pandas)
 
 
@@ -79,8 +79,8 @@ def read_consumptions():
 
 def abc():
     current_dir = os.path.dirname(__file__)
-    # file_path = os.path.join(current_dir, 'ls_complete.h5')
-    file_path = os.path.join(current_dir, 'lstrial_tiny.h5')
+    file_path = os.path.join(current_dir, 'ls_comp.h5')
+    # file_path = os.path.join(current_dir, 'lstrial_tiny.h5')
     uses = pd.read_hdf(file_path, names=['date', 'hour', 'house_id', 'value'])
 
     def get_sum_consumption(group):

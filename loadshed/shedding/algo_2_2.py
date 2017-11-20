@@ -455,3 +455,6 @@ def load_set():
     # plt.xlim([(min(label_x) - w2), (max(label_x) + w2)])
     # plt.ylim([0,1])
     # plt.show()
+
+    dplc_2 = [x/y for x, y in zip(numbers_shed[:50], deficits[:50])]
+    print (dplc_2)

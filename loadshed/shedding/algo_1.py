@@ -11,10 +11,10 @@ from matplotlib import pyplot as plt
 import numpy as np
 from pprint import pprint
 
-FILE_PATH   = os.path.join(os.getcwd(),'data','lstrial_tiny.h5')
+# FILE_PATH   = os.path.join(os.getcwd(),'data','lstrial_tiny.h5')
 LOAD_SEG    = 1    #### USE TO PLOT INDIVIDUAL LOAD SHEDS
-# FILE_PATH   = os.path.join(os.getcwd(),'data','ls_complete_2.h5')
-# LOAD_SEG    = 100
+FILE_PATH   = os.path.join(os.getcwd(),'data','ls_comp.h5')
+# LOAD_SEG    = 1
 PAUSE_PRINT = False
 
 def form_groups(date_hour_group,avg_h_cons,cut,shedding={}):
@@ -169,7 +169,7 @@ def load_set():
     #
     # plt.bar(x,y,width=LOAD_SEG/2.0,color='b',align='center',label = 'Sheds')
     # plt.xlabel('Every 100 shedding events')
-    # plt.ylabel('Number of households shed')
+    # plt.ylabel('Number of times selected')
     # plt.xticks(ticks, rotation='horizontal')
     # plt.ylim([0, max(y)* 1.3])
     # plt.show()
@@ -177,18 +177,18 @@ def load_set():
     # p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
     # p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
     # plt.xlabel('Every 100 shedding events')
-    # plt.ylabel('Number of households shed')
+    # plt.ylabel('Number of times selected')
     # plt.xticks(ticks, rotation='horizontal')
-    # plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
+    # plt.legend((p1[0], p2[0]),('Most selected household','Least selected household'),
     #            fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
     # plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
     # plt.show()
-
-
-
+    #
+    #
+    #
     # plt.bar(x,y,width=LOAD_SEG/2.0,color='g',align='center',label = 'Sheds')
     # plt.xlabel('Every 100 shedding events')
-    # plt.ylabel('Number of households shed')
+    # plt.ylabel('Number of times selected')
     # plt.xticks(x, rotation='horizontal')
     # plt.ylim([0, max(y)* 1.3])
     # plt.show()
@@ -196,9 +196,9 @@ def load_set():
     # p1 = plt.bar(x, yx, LOAD_SEG/2.0, color='b',label = 'Max')
     # p2 = plt.bar(x, ym, LOAD_SEG/2.0, color='r',bottom=yx)
     # plt.xlabel('Every 100 shedding events')
-    # plt.ylabel('Number of households shed')
+    # plt.ylabel('Number of times selected')
     # plt.xticks(x, rotation='horizontal')
-    # plt.legend((p1[0], p2[0]),('Number of sheds of household most shed','Number of sheds of household least shed'),
+    # plt.legend((p1[0], p2[0]),('Most selected household','Least selected household'),
     #            fontsize=10, ncol = 1, framealpha = 0, fancybox = True)
     # plt.ylim([0, max([sum(x) for x in zip(yx,ym)])*1.3])
     # plt.show()
@@ -225,10 +225,10 @@ def load_set():
     # # For plotting deficits AND values of loads shed during first 50 individual loadsheds
     # ax = plt.subplot(111)
     # w = 0.4
-    # plt.xlabel('Individual shedding events')
-    # plt.ylabel('Loads in kW')
+    # plt.xlabel('Number of shedding events')
+    # plt.ylabel('Consumption (kWh)')
     # label_x = range(1, 51)
-    # ax.bar(np.asarray(label_x) - w/2, deficits[:50], width=w, color='g', align='center', label='Deficits')
+    # ax.bar(np.asarray(label_x) - w/2, deficits[:50], width=w, color='b', align='center', label='Deficits')
     # ax.bar(np.asarray(label_x) + w/2, loads_cut[:50], width=w, color='r', align='center', label='Loads cut')
     # plt.xticks([x - 1 for x in label_x][0::5], rotation='horizontal')
     # plt.legend = plt.legend(loc='upper right', shadow=True)
@@ -250,13 +250,18 @@ def load_set():
     # plt.show()
 
 
-    #
-    # # For plotting number of households shed per unit load cut (first 50 sheds)
-    # w2 = 0.5
-    # plt.xlabel('Individual shedding events')
-    # plt.ylabel('Households shed per unit kW load cut')
-    # label_x = range(1, 51)
-    # plt.bar(label_x, [x/y for x, y in zip(numbers_shed[:50], deficits[:50])], width = w2, color='b')
-    # plt.xlim([(min(label_x) - w2), (max(label_x) + w2)])
-    # plt.ylim([0,1])
-    # plt.show()
+
+    # For plotting number of households shed per unit load cut (first 50 sheds)
+    w2 = 0.5
+    plt.xlabel('Number of shedding events')
+    plt.ylabel('Households disconnected per kW shed')
+    label_x = range(1, 51)
+    plt.bar(label_x, [x/y for x, y in zip(numbers_shed[:50], deficits[:50])], width = w2, color='b')
+    plt.xlim([(min(label_x) - w2), (max(label_x) + w2)])
+    plt.ylim([0,1])
+    plt.show()
+
+
+
+    dplc_1 = [x/y for x, y in zip(numbers_shed[:50], deficits[:50])]
+    print (dplc_1)

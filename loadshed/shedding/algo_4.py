@@ -454,10 +454,13 @@ def load_set():
 
     # # For plotting number of households shed per unit load cut (first 50 sheds)
     # w2 = 0.5
-    # plt.xlabel('Individual shedding events')
-    # plt.ylabel('Households shed per unit kW load cut')
+    # plt.xlabel('Number of shedding events')
+    # plt.ylabel('Households disconnected per kW shed')
     # label_x = range(1, 51)
     # plt.bar(label_x, [x/y for x, y in zip(numbers_shed[:50], deficits[:50])], width = w2, color='b')
     # plt.xlim([(min(label_x) - w2), (max(label_x) + w2)])
-    # plt.ylim([0,1])
+    # plt.ylim([0,max([x/y for x, y in zip(numbers_shed[:50], deficits[:50])])*1.1])
     # plt.show()
+
+    # dplc_4 = [x/y for x, y in zip(numbers_shed[:50], deficits[:50])]
+    # print (dplc_4)

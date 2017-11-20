@@ -84,7 +84,7 @@ class Shedding:
                 db.line_verydetail('     shedded_list=empty')
         self.loads_cut.append(load_cut) ##
         self.n_shedding += 1
-        if self.n_shedding % 1 == 0:  #### CHANGE TO 100 or n when needed
+        if self.n_shedding % 100 == 0:  #### CHANGE TO 100 or n when needed
             self.n_highests.append(self.n_highest)
             self.n_mediums.append(self.n_medium)
             self.n_lowests.append(self.n_lowest)
