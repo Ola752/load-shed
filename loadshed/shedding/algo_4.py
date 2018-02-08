@@ -76,7 +76,11 @@ def calc_normalized():
     df = create_df()
     print ('Creating Normalized list')
     group_A(df)
-    print (group_A(df))
+    print (group_A(df)[1])
+
+    print(len(group_A(df)))
+
+
     print ('Done')
 
 def form_groups(date_hour_group,avg_h_cons,cut,shedding):
@@ -136,6 +140,7 @@ def form_groups(date_hour_group,avg_h_cons,cut,shedding):
         while sum( [h[1] for h in group]) <= cut and len(houses) :
             i = 0
             shedding[houses[i][0]] = shedding.get(houses[i][0],0)
+
             group.append(houses[i]+[shedding.get(houses[i][0],0)])
             del houses[i]
 

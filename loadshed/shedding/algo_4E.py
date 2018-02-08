@@ -7,7 +7,7 @@ Created on Sat Oct 14 09:33:14 2017
 """
 Unlike algo_4, this algorithm does not consider standard deviation in selecting
 households. Thus, all households are up for selection, meaning that the number 
-of times each household is selected is equal (or with a difference of 1 max
+of times each household is selected is equal (or with a difference of 1 max)
 """
 
 import pandas as pd
